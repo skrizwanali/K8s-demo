@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: order-service
+  labels: 
+    app: order-service
+spec: 
+  replicas: 3
+  selector: 
+    matchLabels: 
+      app: order-service
+  template: 
+    metadata:
+      labels: 
+        app: order-service
+    spec: 
+      containers:
+      - name: order-service
+        image: med/order-service:2.0
+        volumeMounts:
+          # name must match the volume name below
+          - name: secret-volume
+            mountPath: /etc/secret-volume
+        imagePullPolicy: Never
+        ports: 
+        - containerPort: 8080
+        env:
+        - name: DB_NAME
+          valueFrom: 
+            configMapKeyRef:
+              name: order-service
+              key: database-name
+       # The secret data is exposed to Containers in the Pod through a Volume.
+      volumes:
+        - name: secret-volume
+          secret:
+            secretName: order-service     
+            items:
+            - key: database-user
+              path: user
+            - key: database-password
+              path: pass 
+              
+              
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  selector:
+    app: order-service
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 30002
+  type: NodePort
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: order-service-ingress
+spec:
+  rules:
+  - host: smk8s.com
+    http:
+      paths:
+      - path: /order
+        backend:
+          serviceName: order-service
+          servicePort: 8080
+ 
