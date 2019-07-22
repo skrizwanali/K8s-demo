@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: order-service-kubernetes
+  labels: 
+    app: order-service-kubernetes
+spec: 
+  replicas: 3
+  selector: 
+    matchLabels: 
+      app: order-service-kubernetes
+  template: 
+    metadata:
+      labels: 
+        app: order-service-kubernetes
+    spec: 
+      containers:
+      - name: order-service-kubernetes
+        image: gcr.io/order-service-kubernetes/order-service-k8s-demo:v1
+        volumeMounts:
+          # name must match the volume name below
+          - name: secret-volume
+            mountPath: /etc/secret-volume
+        imagePullPolicy: Never
+        ports: 
+        - containerPort: 8080
+        env:
+        - name: DB_NAME
+          valueFrom: 
+            configMapKeyRef:
+              name: order-service
+              key: database-name
+       # The secret data is exposed to Containers in the Pod through a Volume.
+      volumes:
+        - name: secret-volume
+          secret:
+            secretName: order-service     
+            items:
+            - key: database-user
+              path: user
+            - key: database-password
+              path: pass 
+              
+              
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service-kubernetes
+spec:
+  selector:
+    app: order-service-kubernetes
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 30002
+  type: LoadBalancer
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: order-service-ingress
+spec:
+  rules:
+  - host: demo.com
+    http:
+      paths:
+      - path: /order
+        backend:
+          serviceName: order-service-kubernetes
+          servicePort: 8080
+ 
