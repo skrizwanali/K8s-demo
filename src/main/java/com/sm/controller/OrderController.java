@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +20,11 @@ import com.sm.config.PropertiesConfig;
 public class OrderController {
 	@Autowired
 	PropertiesConfig propertiesConfig;
+	
+	@GetMapping("/")
+	public ResponseEntity<String> test(){
+		return new ResponseEntity<String>(HttpStatus.OK);
+	}
 
 	@GetMapping("/order")
 	public String getOrders() throws URISyntaxException, IOException {
